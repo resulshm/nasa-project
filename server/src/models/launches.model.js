@@ -3,19 +3,6 @@ const planets = require("./planets.mongo");
 
 const defaultFlightNumber = 100;
 
-const launch = {
-  flightNumber: 100,
-  mission: "Kepler Exploration X",
-  rocket: "Explorer IS1",
-  launchDate: new Date("December 27, 2030"),
-  target: "Kepler-442 b",
-  customers: ["ZTM", "NASA"],
-  upcoming: true,
-  success: true,
-};
-
-//launches.set(launch.flightNumber, launch);
-
 async function saveLaunch(launch) {
   const planet = await planets.findOne({
     keplerName: launch.target,
@@ -68,28 +55,23 @@ async function scheduleLaunch(launch) {
   }
 }
 
-function addNewLaunch(launch) {
-  lastFlightNumber++;
-  launches.set(
-    lastFlightNumber,
-    Object.assign(launch, {
-      flightNumber: lastFlightNumber,
-      customers: ["ZTM", "NASA"],
-      success: true,
-      upcoming: true,
-    })
+async function existsLaunchWithId(launchId) {
+  return await launches.findOne({
+    flightNumber: launchId,
+  });
+}
+
+async function abortLaunchById(launchId) {
+  const aborted = await launches.updateOne(
+    {
+      flightNumber: launchId,
+    },
+    {
+      upcoming: false,
+      success: false,
+    }
   );
-}
-
-function existsLaunchWithId(launchId) {
-  return launches.has(launchId);
-}
-
-function abortLaunchById(launchId) {
-  const aborted = launches.get(launchId);
-  aborted.success = false;
-  aborted.upcoming = false;
-  return aborted;
+  return aborted.ok === 1 && aborted.nModified === 1;
 }
 
 module.exports = {
